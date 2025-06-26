@@ -1,0 +1,38 @@
+services:
+  nginx:
+    container_name: nginx
+    build:
+      context: ./requirements/nginx
+    ports:
+      - "443:443"
+    volumes:
+      - nginx_certs:/etc/nginx/ssl
+    networks:
+      - app-network
+    env_file:
+      - .env
+    restart: always
+    depends_on:
+      - wordpress
+
+  wordpress:
+    container_name: wordpress
+    build:
+      context: ./requirements/wordpress
+    volumes:
+      - wp_data:/var/www/wordpress
+    env_file:
+      - .env
+    networks:
+      - app-network
+    restart: always
+#    depends_on:
+#      - mariadb  # You'll add this later
+
+volumes:
+  wp_data:
+  nginx_certs:
+
+networks:
+  app-network:
+    driver: bridge
