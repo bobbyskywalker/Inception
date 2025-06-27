@@ -26,12 +26,39 @@ services:
     networks:
       - app-network
     restart: always
-#    depends_on:
-#      - mariadb  # You'll add this later
+    depends_on:
+      - mariadb  # You'll add this later
+
+  mariadb:
+    container_name: mariadb
+    build:
+      context: ./requirements/mariadb
+    env_file:
+      - .env
+    volumes:
+      - wp_db_data:/var/lib/mysql
+    networks:
+      - app-network
+    restart: always
 
 volumes:
   wp_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/agarbacz/data/wordpress
+
+  wp_db_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/agarbacz/data/mariadb
+
   nginx_certs:
+    driver: local
+
 
 networks:
   app-network:
