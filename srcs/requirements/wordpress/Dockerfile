@@ -1,46 +1,32 @@
-FROM alpine:3.21
+# container's operating system
+FROM debian:bullseye
 
-# Create logs directory early (writable by nobody)
-RUN mkdir -p /var/www/wordpress/logs && \
-    chown -R nobody:nobody /var/www/wordpress
+# container's packages
+RUN apt update -y
+RUN apt upgrade -y
+RUN apt install php -y
+RUN apt install php7.4-fpm -y
+RUN apt install php7.4-mysql -y
+RUN apt install mariadb-client -y
+RUN apt install curl -y
 
-# Install PHP 8.2 and necessary dependencies
-RUN apk update && apk add --no-cache \
-    php82 php82-fpm php82-mysqli php82-exif \
-    php82-gd php82-curl php82-mbstring php82-opcache \
-    php82-pecl-imagick php82-dom php82-session \
-    php82-zlib php82-tokenizer php82-xml php82-common \
-    curl tar less unzip bash \
-    && mkdir -p /var/www/wordpress/logs \
-    && chown -R nobody:nobody /var/www/wordpress \
-    # ✅ Redirect PHP-FPM logs to Docker stderr
-    && sed -i 's|^;*error_log = .*|error_log = /proc/self/fd/2|' /etc/php82/php-fpm.conf \
-    && sed -i 's|^;*access.log = .*|access.log = /proc/self/fd/2|' /etc/php82/php-fpm.d/www.conf \
-    && sed -i 's|^;*catch_workers_output = .*|catch_workers_output = yes|' /etc/php82/php-fpm.d/www.conf
+# container's config
+RUN service php7.4-fpm start
 
-RUN sed -i 's|^listen = .*|listen = 9000|' /etc/php82/php-fpm.d/www.conf
+WORKDIR /var/www/html
 
-# Set WordPress version and working directory
-ENV WP_VERSION=6.5.4
-WORKDIR /var/www/wordpress
+RUN sed -i -e 's/listen = .*/listen = 9000/g' /etc/php/7.4/fpm/pool.d/www.conf
 
-# Download and extract WordPress
-RUN curl -o wordpress.tar.gz https://wordpress.org/wordpress-${WP_VERSION}.tar.gz && \
-    tar -xzf wordpress.tar.gz --strip-components=1 && \
-    rm wordpress.tar.gz
+# Install WP-CLI globally as `wp`
+RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
+    chmod +x wp-cli.phar && \
+    mv wp-cli.phar /usr/local/bin/wp
 
-# Copy custom wp-config.php
-#COPY conf/wp-config.php /var/www/wordpress/wp-config.php
+COPY ./config/script.sh /
+RUN chmod 777 /script.sh
 
-# Set final permissions
-RUN chown -R nobody:nobody /var/www/wordpress
+# port expose
+EXPOSE 9000
 
-# Add setup script
-COPY tools/setup.sh /setup.sh
-RUN chmod +x /setup.sh
-
-# Switch to non-root user
-USER nobody
-
-# Start PHP-FPM (this is PID 1)
-CMD ["/setup.sh"]
+# running the config script
+CMD [ "/script.sh" ]

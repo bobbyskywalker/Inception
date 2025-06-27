@@ -1,2 +1,4 @@
 srcs/requirements/nginx/tools/ssl/nginx.key
 /ssl
+/.idea
+*/.env

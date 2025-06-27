@@ -1,71 +1,56 @@
-services:
+services: 
   nginx:
     container_name: nginx
-    build:
-      context: ./requirements/nginx
-    ports:
-      - "443:443"
+    build: ./requirements/nginx/
     volumes:
-      - nginx_certs:/etc/nginx/ssl
-      - wp_data:/var/www/wordpress
+    - wp:/var/www/html
     networks:
-      - app-network
-    env_file:
-      - .env
-    restart: always
+    - inception
     depends_on:
-      - wordpress
+    - wordpress
+    ports:
+    - "443:443"
+    env_file: .env
+    restart: on-failure
 
   wordpress:
     container_name: wordpress
-    build:
-      context: ./requirements/wordpress
+    build: ./requirements/wordpress/
     volumes:
-      - wp_data:/var/www/wordpress
-    env_file:
-      - .env
+    - wp:/var/www/html
     networks:
-      - app-network
-    restart: always
+    - inception
     depends_on:
-      mariadb:
-        condition: service_healthy   # ✅ Wait until MariaDB is healthy
-
+    - mariadb
+    env_file: .env
+    restart: on-failure
+  
   mariadb:
     container_name: mariadb
-    build:
-      context: ./requirements/mariadb
-    env_file:
-      - .env
+    build: ./requirements/mariadb/
     volumes:
-      - wp_db_data:/var/lib/mysql
+    - mdb:/var/lib/mysql
     networks:
-      - app-network
-    restart: always
-    healthcheck:                      # ✅ Healthcheck for wait logic
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
+    - inception
+    expose:
+    - "3306"
+    env_file: .env
+    restart: on-failure
+  
 volumes:
-  wp_data:
+  wp:
     driver: local
     driver_opts:
-      type: none
-      o: bind
-      device: /home/olek/data/wordpress
-
-  wp_db_data:
+      device: /home/olek/data/wp
+      o: "bind"
+      type: "none"
+  mdb:
     driver: local
     driver_opts:
-      type: none
-      o: bind
-      device: /home/olek/data/mariadb
-
-  nginx_certs:
-    driver: local
+      device: /home/olek/data/mdb
+      o: "bind"
+      type: "none"
 
 networks:
-  app-network:
+  inception:
     driver: bridge

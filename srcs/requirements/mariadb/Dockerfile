@@ -1,22 +1,17 @@
-FROM alpine:3.21
+# container's operating system
+FROM debian:bullseye
 
-# Install MariaDB
-RUN apk update && apk add --no-cache mariadb mariadb-client
+# container's packages
+RUN apt update -y
+RUN apt upgrade -y
+RUN apt install mariadb-server -y
 
-# Prepare required directories and permissions
-RUN mkdir -p /run/mysqld /var/lib/mysql /docker-entrypoint-initdb.d && \
-    chown -R mysql:mysql /run/mysqld /var/lib/mysql
+# container's config script
+COPY ./config/script.sh /
+RUN chmod +x /script.sh
 
-# Copy config and SQL
-COPY conf/custom.cnf /etc/my.cnf.d/custom.cnf
-COPY tools/init.sql /docker-entrypoint-initdb.d/init.sql
-COPY tools/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# port expose
+EXPOSE	3306
 
-VOLUME /var/lib/mysql
-
-EXPOSE 3306
-
-USER mysql
-
-CMD ["/entrypoint.sh"]
+# running the config script
+CMD [ "/script.sh" ]
