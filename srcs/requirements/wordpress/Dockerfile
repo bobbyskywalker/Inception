@@ -30,7 +30,7 @@ RUN curl -o wordpress.tar.gz https://wordpress.org/wordpress-${WP_VERSION}.tar.g
     rm wordpress.tar.gz
 
 # Copy custom wp-config.php
-COPY conf/wp-config.php /var/www/wordpress/wp-config.php
+#COPY conf/wp-config.php /var/www/wordpress/wp-config.php
 
 # Set final permissions
 RUN chown -R nobody:nobody /var/www/wordpress

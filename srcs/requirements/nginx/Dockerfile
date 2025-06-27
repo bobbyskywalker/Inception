@@ -9,6 +9,7 @@ RUN mkdir -p /etc/nginx/ssl
 COPY conf/nginx.conf /etc/nginx/nginx.conf
 COPY tools/ssl/nginx.crt /etc/nginx/ssl/nginx.crt
 COPY tools/ssl/nginx.key /etc/nginx/ssl/nginx.key
+COPY conf/fastcgi_params /etc/nginx/fastcgi_params
 
 # port
 EXPOSE 443
