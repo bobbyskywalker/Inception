@@ -1,32 +1,24 @@
-# container's operating system
 FROM debian:bullseye
 
-# container's packages
-RUN apt update -y
-RUN apt upgrade -y
-RUN apt install php -y
-RUN apt install php7.4-fpm -y
-RUN apt install php7.4-mysql -y
-RUN apt install mariadb-client -y
-RUN apt install curl -y
+RUN apt update -y && \
+    apt upgrade -y && \
+    apt install -y php php7.4-fpm php7.4-mysql mariadb-client curl
 
-# container's config
-RUN service php7.4-fpm start
+# Configure PHP-FPM to listen on TCP
+RUN sed -i 's|^listen = .*|listen = 9000|' /etc/php/7.4/fpm/pool.d/www.conf
 
-WORKDIR /var/www/html
+# 🛠 Fix FPM startup error
+RUN mkdir -p /run/php
 
-RUN sed -i -e 's/listen = .*/listen = 9000/g' /etc/php/7.4/fpm/pool.d/www.conf
-
-# Install WP-CLI globally as `wp`
+# Install wp-cli globally
 RUN curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
     chmod +x wp-cli.phar && \
     mv wp-cli.phar /usr/local/bin/wp
 
-COPY ./config/script.sh /
-RUN chmod 777 /script.sh
+WORKDIR /var/www/html
 
-# port expose
+COPY ./config/script.sh /script.sh
+RUN chmod +x /script.sh
+
 EXPOSE 9000
-
-# running the config script
-CMD [ "/script.sh" ]
+CMD ["/script.sh"]

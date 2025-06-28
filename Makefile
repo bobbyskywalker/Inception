@@ -30,9 +30,13 @@ create:
 
 up: create
 	@docker compose -f $(DOCKER_COMPOSE) up -d --no-deps --build --remove-orphans --wait
-	@echo "Waiting for WordPress to fully boot..."
-	@sleep 5
+	@echo "Waiting for WordPress to fully install..."
+	@until docker exec wordpress wp core is-installed --allow-root > /dev/null 2>&1; do \
+		echo "⏳ Waiting for WordPress setup to finish..."; \
+		sleep 2; \
+	done
 	@$(MAKE) set-site
+
 
 down:
 	@docker compose -f $(DOCKER_COMPOSE) down
